@@ -5,7 +5,6 @@ import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
-
 import java.util.Optional;
 
 @Service
@@ -13,17 +12,22 @@ import java.util.Optional;
 @AllArgsConstructor
 public class TaskProcessor {
 
-    private final DirectService directService;
+    private static final int SLEEP_DELAY = 10000;
 
-    @Scheduled(fixedDelay = 1000)
+    private final DirectService directService;
+    private final MegaTaskExecutor taskExecutor;
+
+    @Scheduled(fixedDelay = 100)
     public void processTask() {
         Optional<QueryTaskDTO> item = directService.next();
         if (item.isPresent()) {
-            log.info(item.get().toString());
+            QueryTaskDTO qtDto = item.get();
+            taskExecutor.execute(qtDto);
         } else {
             try {
-                log.info("No data sleep");
-                Thread.sleep(5000);
+                String threadName = Thread.currentThread().getName();
+                log.info("{} - No data sleep for SLEEP_DELAY={}", threadName, SLEEP_DELAY);
+                Thread.sleep(SLEEP_DELAY);
             } catch (InterruptedException e) {
                 log.error(e.getMessage(), e);
             }
